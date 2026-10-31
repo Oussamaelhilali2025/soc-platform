@@ -586,37 +586,31 @@ personnelles ou informations confidentielles.
 
 Exemple, à adapter aux noms réels des fichiers :
 
-## 📸 Aperçu de la plateforme
+## 📸 Screenshots
 
-### Tableau de bord SOC
-Vue centralisée des événements, alertes et incidents de sécurité.
+### 1. SOC Dashboard
+![SOC Dashboard](./docs/dashboard.png)
 
-![SOC Dashboard](docs/dashboard.png)
+### 2. Security Alerts
+![Security Alerts](./docs/alerts.png)
 
-### Alertes de sécurité
-Visualisation et suivi des alertes remontées par Wazuh.
+### 3. Incident Management
+![Incident Management](./docs/incidents.png)
 
-![Security Alerts](docs/alerts.png)
+### 4. Vulnerability Management
+![Vulnerability Management](./docs/vulnerabilities.png)
 
-### Gestion des incidents
-Centralisation et suivi des incidents de sécurité.
+### 5. SOAR Automation - Shuffle
+![Shuffle Workflow](./docs/shuffle_workflow.png)
 
-![Incident Management](docs/incidents.png)
+### 6. GLPI Ticket Management
+![GLPI Integration](./docs/glpi.png)
 
-### Gestion des vulnérabilités
-Identification et suivi des vulnérabilités avec Greenbone/OpenVAS.
+### 7. Login Interface
+![Login Interface](./docs/login.png)
 
-![Vulnerability Management](docs/vulnerabilities.png)
-
-### Automatisation SOAR
-Workflow d'automatisation et de traitement des alertes avec Shuffle.
-
-![Shuffle Workflow](docs/shuffle_workflow.png)
-
-### Gestion des tickets
-Intégration avec GLPI pour le suivi des actions correctives.
-
-![GLPI](docs/glpi.png)
+### 8. High-Level Architecture
+![SOC Architecture](./docs/high%20level%20design.png)
 
 ## Perspectives
 
