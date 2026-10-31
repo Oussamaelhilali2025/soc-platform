@@ -580,7 +580,7 @@ complémentaire, une solution prête pour un déploiement en production.
 ## Captures d'écran
 
 Ajoutez uniquement des captures d'écran anonymisées dans
-`docs/screenshots/`, puis référencez-les ici. Vérifiez qu'elles ne
+`docs/`, puis référencez-les ici. Vérifiez qu'elles ne
 montrent ni secrets, ni tokens, ni adresses publiques, ni données
 personnelles ou informations confidentielles.
 
@@ -637,6 +637,6 @@ SARL**.
 
 ## Licence
 
-Aucun fichier de licence n'étant spécifié ici, les conditions de
-réutilisation du code ne sont pas encore définies. Ajoutez un fichier
-`LICENSE` si vous souhaitez autoriser et encadrer sa réutilisation.
+Ce projet est distribué sous licence [MIT](LICENSE).
+
+Vous êtes autorisé à utiliser, copier, modifier et distribuer ce logiciel conformément aux conditions de la licence MIT..
