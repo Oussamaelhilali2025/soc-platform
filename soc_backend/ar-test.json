@@ -1,0 +1,9 @@
+﻿{
+  "command": "firewall-drop",
+  "arguments": ["192.0.2.123"],
+  "alert": {
+    "data": {
+      "source_ip": "192.0.2.123"
+    }
+  }
+}

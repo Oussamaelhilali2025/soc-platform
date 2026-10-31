@@ -1,0 +1,361 @@
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import MetaData, Table, select, insert, update, delete
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.security import require_permission
+
+
+router = APIRouter(
+    prefix="/incident-evenement",
+    tags=["incident-evenement"]
+)
+
+md = MetaData()
+
+_table = None
+_incident_table = None
+_evenement_table = None
+_utilisateur_table = None
+
+
+def get_table(db: Session):
+    global _table
+
+    if _table is None:
+        _table = Table(
+            "incident_evenement",
+            md,
+            autoload_with=db.bind
+        )
+
+    return _table
+
+
+def get_incident_table(db: Session):
+    global _incident_table
+
+    if _incident_table is None:
+        _incident_table = Table(
+            "incident",
+            md,
+            autoload_with=db.bind
+        )
+
+    return _incident_table
+
+
+def get_evenement_table(db: Session):
+    global _evenement_table
+
+    if _evenement_table is None:
+        _evenement_table = Table(
+            "evenement",
+            md,
+            autoload_with=db.bind
+        )
+
+    return _evenement_table
+
+
+def get_utilisateur_table(db: Session):
+    global _utilisateur_table
+
+    if _utilisateur_table is None:
+        _utilisateur_table = Table(
+            "utilisateur",
+            md,
+            autoload_with=db.bind
+        )
+
+    return _utilisateur_table
+
+
+def uuid_to_bytes(value: str) -> bytes:
+    try:
+        return uuid.UUID(value).bytes
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"UUID invalide: {value}"
+        )
+
+
+def normalize_uuid(value):
+    if isinstance(value, (bytes, bytearray)) and len(value) == 16:
+        return str(uuid.UUID(bytes=bytes(value)))
+
+    return value
+
+
+def row_to_dict(row):
+    if row is None:
+        return None
+
+    data = dict(row._mapping)
+
+    for field in [
+        "id_incident",
+        "id_evenement",
+        "id_utilisateur_ajout"
+    ]:
+        if field in data:
+            data[field] = normalize_uuid(data[field])
+
+    if "date_ajout" in data and data["date_ajout"] is not None:
+        data["date_ajout"] = data["date_ajout"].isoformat()
+
+    return data
+
+
+class IncidentEvenementCreate(BaseModel):
+    id_incident: str
+    id_evenement: str
+    id_utilisateur_ajout: str
+
+
+class IncidentEvenementUpdate(BaseModel):
+    id_utilisateur_ajout: str
+
+
+@router.post(
+    "",
+    status_code=201,
+    dependencies=[
+        Depends(require_permission("INCIDENT_CREATE"))
+    ]
+)
+def create_relation(
+    payload: IncidentEvenementCreate,
+    db: Session = Depends(get_db)
+):
+    t = get_table(db)
+
+    incident_id = uuid_to_bytes(payload.id_incident)
+    evenement_id = uuid_to_bytes(payload.id_evenement)
+    utilisateur_id = uuid_to_bytes(payload.id_utilisateur_ajout)
+
+    incident_table = get_incident_table(db)
+    evenement_table = get_evenement_table(db)
+    utilisateur_table = get_utilisateur_table(db)
+
+    # Vérifier que l'incident existe
+    incident = db.execute(
+        select(incident_table).where(
+            incident_table.c.id_incident == incident_id
+        )
+    ).first()
+
+    if not incident:
+        raise HTTPException(
+            status_code=404,
+            detail="Incident introuvable"
+        )
+
+    # Vérifier que l'événement existe
+    evenement = db.execute(
+        select(evenement_table).where(
+            evenement_table.c.id_evenement == evenement_id
+        )
+    ).first()
+
+    if not evenement:
+        raise HTTPException(
+            status_code=404,
+            detail="Événement introuvable"
+        )
+
+    # Vérifier que l'utilisateur existe
+    utilisateur = db.execute(
+        select(utilisateur_table).where(
+            utilisateur_table.c.id_utilisateur == utilisateur_id
+        )
+    ).first()
+
+    if not utilisateur:
+        raise HTTPException(
+            status_code=404,
+            detail="Utilisateur introuvable"
+        )
+
+    # Vérifier si la relation existe déjà
+    existing = db.execute(
+        select(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="La relation incident/événement existe déjà"
+        )
+
+    # Création
+    db.execute(
+        insert(t).values(
+            id_incident=incident_id,
+            id_evenement=evenement_id,
+            id_utilisateur_ajout=utilisateur_id
+        )
+    )
+
+    db.commit()
+
+    row = db.execute(
+        select(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    ).first()
+
+    return row_to_dict(row)
+
+
+@router.get(
+    "/{id_incident}/{id_evenement}",
+    dependencies=[
+        Depends(require_permission("INCIDENT_READ"))
+    ]
+)
+def get_relation(
+    id_incident: str,
+    id_evenement: str,
+    db: Session = Depends(get_db)
+):
+    t = get_table(db)
+
+    incident_id = uuid_to_bytes(id_incident)
+    evenement_id = uuid_to_bytes(id_evenement)
+
+    row = db.execute(
+        select(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    ).first()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Relation incident/événement introuvable"
+        )
+
+    return row_to_dict(row)
+
+
+@router.put(
+    "/{id_incident}/{id_evenement}",
+    dependencies=[
+        Depends(require_permission("INCIDENT_UPDATE"))
+    ]
+)
+def update_relation(
+    id_incident: str,
+    id_evenement: str,
+    payload: IncidentEvenementUpdate,
+    db: Session = Depends(get_db)
+):
+    t = get_table(db)
+
+    incident_id = uuid_to_bytes(id_incident)
+    evenement_id = uuid_to_bytes(id_evenement)
+    utilisateur_id = uuid_to_bytes(payload.id_utilisateur_ajout)
+
+    utilisateur_table = get_utilisateur_table(db)
+
+    # Vérifier que l'utilisateur existe
+    utilisateur = db.execute(
+        select(utilisateur_table).where(
+            utilisateur_table.c.id_utilisateur == utilisateur_id
+        )
+    ).first()
+
+    if not utilisateur:
+        raise HTTPException(
+            status_code=404,
+            detail="Utilisateur introuvable"
+        )
+
+    # Vérifier que la relation existe
+    existing = db.execute(
+        select(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    ).first()
+
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Relation incident/événement introuvable"
+        )
+
+    db.execute(
+        update(t)
+        .where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+        .values(
+            id_utilisateur_ajout=utilisateur_id
+        )
+    )
+
+    db.commit()
+
+    row = db.execute(
+        select(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    ).first()
+
+    return row_to_dict(row)
+
+
+@router.delete(
+    "/{id_incident}/{id_evenement}",
+    dependencies=[
+        Depends(require_permission("INCIDENT_CLOSE"))
+    ]
+)
+def delete_relation(
+    id_incident: str,
+    id_evenement: str,
+    db: Session = Depends(get_db)
+):
+    t = get_table(db)
+
+    incident_id = uuid_to_bytes(id_incident)
+    evenement_id = uuid_to_bytes(id_evenement)
+
+    result = db.execute(
+        delete(t).where(
+            (t.c.id_incident == incident_id)
+            &
+            (t.c.id_evenement == evenement_id)
+        )
+    )
+
+    if result.rowcount == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Relation incident/événement introuvable"
+        )
+
+    db.commit()
+
+    return {
+        "message": "Relation incident/événement supprimée"
+    }
