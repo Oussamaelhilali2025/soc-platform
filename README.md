@@ -330,8 +330,8 @@ configuration.
 Remplacez l'URL par celle de votre dépôt GitHub :
 
 ``` bash
-git clone https://github.com/<votre-compte>/<votre-depot>.git
-cd <votre-depot>
+git clone https://github.com/Oussamaelhilali2025/soc-platform.git
+cd soc-platform
 ```
 
 ### 2. Préparer la base de données
@@ -586,11 +586,37 @@ personnelles ou informations confidentielles.
 
 Exemple, à adapter aux noms réels des fichiers :
 
-``` markdown
-![Tableau de bord SOC](docs/screenshots/dashboard.png)
-![Alertes de sécurité](docs/screenshots/alerts.png)
-![Gestion des incidents](docs/screenshots/incidents.png)
-```
+## 📸 Aperçu de la plateforme
+
+### Tableau de bord SOC
+Vue centralisée des événements, alertes et incidents de sécurité.
+
+![SOC Dashboard](docs/dashboard.png)
+
+### Alertes de sécurité
+Visualisation et suivi des alertes remontées par Wazuh.
+
+![Security Alerts](docs/alerts.png)
+
+### Gestion des incidents
+Centralisation et suivi des incidents de sécurité.
+
+![Incident Management](docs/incidents.png)
+
+### Gestion des vulnérabilités
+Identification et suivi des vulnérabilités avec Greenbone/OpenVAS.
+
+![Vulnerability Management](docs/vulnerabilities.png)
+
+### Automatisation SOAR
+Workflow d'automatisation et de traitement des alertes avec Shuffle.
+
+![Shuffle Workflow](docs/shuffle_workflow.png)
+
+### Gestion des tickets
+Intégration avec GLPI pour le suivi des actions correctives.
+
+![GLPI](docs/glpi.png)
 
 ## Perspectives
 
